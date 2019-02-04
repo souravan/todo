@@ -9,3 +9,4 @@
 / HomeR GET
 
 /todo-item TodoItemR POST
+/auth AuthR Auth getAuth

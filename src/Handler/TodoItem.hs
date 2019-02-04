@@ -9,8 +9,8 @@ postTodoItemR = do
     todoItem <- (requireJsonBody :: Handler TodoItem)
 
     -- The YesodAuth instance in Foundation.hs defines the UserId to be the type used for authentication.
-    maybeCurrentUserId <- maybeAuthId
-    let todoItem' = todoItem { todoItemUserId = maybeCurrentUserId }
+    currentUserId <- requireAuthId
+    let todoItem' = todoItem { todoItemUserId = currentUserId }
 
     insertedTodoItem <- runDB $ insertEntity todoItem'
     returnJson insertedTodoItem

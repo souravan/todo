@@ -18,7 +18,8 @@ $(function() {
       contentType: "application/json",
       data: JSON.stringify({
         task: task,
-        done: false
+        done: false,
+        userId: -1
       }),
       success: function (data) {
         var newNode = $("<li></li>");

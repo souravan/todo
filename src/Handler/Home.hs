@@ -26,7 +26,10 @@ getHomeR :: Handler Html
 getHomeR = do
     let submission = Nothing :: Maybe FileForm
         handlerName = "getHomeR" :: Text
-    allTodoItems <- runDB $ getAllTodoItems
+    currentUserId <- requireAuthId
+    allTodoItems <- runDB $ getAllTodoItems currentUserId
+    -- allTodoItems <- runDB $ selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
+   
 
     defaultLayout $ do
         let (commentFormId, commentTextareaId, commentListId) = commentIds
@@ -37,5 +40,5 @@ getHomeR = do
 commentIds :: (Text, Text, Text)
 commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")
 
-getAllTodoItems :: DB [Entity TodoItem]
-getAllTodoItems = selectList [] [Asc TodoItemId]
+getAllTodoItems :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity TodoItem]
+getAllTodoItems currentUserId = selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
