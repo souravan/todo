@@ -5,6 +5,8 @@
 {-# LANGUAGE TypeFamilies #-}
 module Handler.Home where
 
+-- import Import
+import DBApi
 import Import
 import Yesod.Form.Bootstrap3 (BootstrapFormLayout (..), renderBootstrap3)
 import Text.Julius (RawJS (..))
@@ -29,10 +31,15 @@ getHomeR = do
     currentUserId <- requireAuthId
     allTodoItems <- runDB $ getAllTodoItems currentUserId
     -- allTodoItems <- runDB $ selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
-   
+    sharedTodoItemsUsers <- runDB $ getAllsharedFrom currentUserId
 
+    -- sharedTodoItems = do
+    let sharedFromList = entityListtoList sharedTodoItemsUsers
+    sharedTodoItems <- runDB $ getAllSharedItems sharedFromList
+        
     defaultLayout $ do
         let (commentFormId, commentTextareaId, commentListId) = commentIds
+        let   (shareFormId, shareFormAreaId) =  shareIds
         aDomId <- newIdent
         setTitle "Welcome To Yesod!"
         $(widgetFile "homepage")
@@ -40,5 +47,23 @@ getHomeR = do
 commentIds :: (Text, Text, Text)
 commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")
 
+
+shareIds :: (Text, Text)
+shareIds = ("js-shareForm", "js-shareTodoUname")
+
+entityListtoList :: [Entity SharedItem] -> [UserId]
+entityListtoList [] = []
+entityListtoList (x:xs) = sharedFronUserId:(entityListtoList xs)
+        where 
+            sharedFronUserId = sharedItemShareFrom $ entityVal x
+
+getAllSharedItems :: MonadIO m => [UserId] -> ReaderT SqlBackend m [Entity TodoItem]
+getAllSharedItems userIds = selectList [TodoItemUserId <-. userIds] [Asc TodoItemId]
+
+
 getAllTodoItems :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity TodoItem]
 getAllTodoItems currentUserId = selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
+
+
+getAllsharedFrom :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity SharedItem]
+getAllsharedFrom currentUserId = selectList [SharedItemShareTo ==. currentUserId] [Asc SharedItemId]

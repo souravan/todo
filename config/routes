@@ -9,4 +9,5 @@
 / HomeR GET
 
 /todo-item TodoItemR POST
+/shared-items ShareTodoListR POST
 /auth AuthR Auth getAuth

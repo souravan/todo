@@ -22,5 +22,22 @@
                    <ul ##{commentListId}>
                        $forall todoItem <- allTodoItems
                            <li>#{todoItemTask $ entityVal todoItem}
-
+        
+        <div .row>
+            <div .col-lg-6>
+                <div .bs-callout.bs-callout-info.well>
+                    Share your todo list with another user:
+                    <form .form-horizontal ##{shareFormId}>
+                        <div .field>
+                            <input type="text"  ##{shareFormAreaId} >
+                        <br>
+                        <button .btn.btn-primary type=submit>
+                           Share
+            <div .col-lg-4.col-lg-offset-1>
+               <div .bs-callout.bs-callout-info>
+                   <small>
+                       Users who shared their todo items with you
+                   <ul ##{shareFormId}>
+                       $forall todoItem <- sharedTodoItems
+                           <li>#{todoItemTask $ entityVal todoItem}
     <hr>
