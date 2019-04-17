@@ -44,7 +44,7 @@ module DBApi where
     data RefinedUser =RefinedUser {userName::Text ,refUserUserId:: UserId}
    
     toPersistentFilterUser :: RefinedFilter RefinedUser -> Filter User
-    toPersistentFilterUser (RefinedFilter f value filter) =
+    toPersistentFilterUser (RefinedFilter f value lvalue filter) =
         case filter of
             EQUAL -> field ==. value
             NE -> field !=. value
@@ -52,6 +52,8 @@ module DBApi where
             LTP -> field <. value
             GE -> field >=. value
             GTP -> field >. value
+            IN -> (field <-. lvalue)
+            NOTIN -> field /<-. lvalue
             where
                 field = (refentity_entity_user f)
     
@@ -92,7 +94,7 @@ module DBApi where
     --     } 
     
     toPersistentFilterTodoItem :: RefinedFilter RefinedTodoItem -> Filter TodoItem
-    toPersistentFilterTodoItem (RefinedFilter f value filter) =
+    toPersistentFilterTodoItem (RefinedFilter f value lvalue filter) =
         case filter of
             EQUAL -> field ==. value
             NE -> field !=. value
@@ -100,6 +102,8 @@ module DBApi where
             LTP -> field <. value
             GE -> field >=. value
             GTP -> field >. value
+            IN -> field <-. lvalue
+            NOTIN -> field /<-. lvalue
             where
                 field = (refentity_entity_TodoItem  f)
     
@@ -142,7 +146,7 @@ module DBApi where
     --     } 
     
     toPersistentFilterSharedItem  :: RefinedFilter RefinedSharedItem  -> Filter SharedItem 
-    toPersistentFilterSharedItem  (RefinedFilter f value filter) =
+    toPersistentFilterSharedItem  (RefinedFilter f value lvalue filter) =
         case filter of
             EQUAL -> field ==. value
             NE -> field !=. value
@@ -150,6 +154,8 @@ module DBApi where
             LTP -> field <. value
             GE -> field >=. value
             GTP -> field >. value
+            IN -> field <-. lvalue
+            NOTIN -> field /<-. lvalue
             where
                 field = (refentity_entity_SharedItem   f)
     
@@ -197,6 +203,7 @@ module DBApi where
     data RefinedFilter record = forall typ.PersistField typ => RefinedFilter
         { refinedFilterField  :: RefinedEntityField record typ
         , refinedFilterValue  :: typ
+        , refinedFilterLValue  :: [typ]
         , refinedFilterFilter :: RefinedPersistFilter
         } 
 
@@ -220,7 +227,7 @@ module DBApi where
         RefSharedItemShareFrom::RefinedEntityField RefinedSharedItem UserId
 
     
-    data RefinedPersistFilter = EQUAL | NE | LE | LTP | GE | GTP
+    data RefinedPersistFilter = EQUAL | NE | LE | LTP | GE | GTP | IN | NOTIN
 
     -- data Filter a = Filter
     
@@ -241,5 +248,23 @@ module DBApi where
     filterSharedFrom :: UserId -> RefinedFilter RefinedSharedItem
     filterSharedFrom val = RefinedFilter{ refinedFilterField = RefSharedItemShareFrom, refinedFilterValue=val,
                         refinedFilterFilter= EQUAL}
+    
+    filterTodoItemUserId_EQ :: UserId -> RefinedFilter RefinedTodoItem
+    filterTodoItemUserId_EQ val = RefinedFilter{ refinedFilterField = RefTodoUserId, refinedFilterValue=val,
+                        refinedFilterFilter= EQUAL}
+
+    filterTodoItemUserId_IN ::  [UserId] -> RefinedFilter RefinedTodoItem
+    filterTodoItemUserId_IN val = RefinedFilter{ refinedFilterField = RefTodoUserId, refinedFilterLValue=val,
+                        refinedFilterFilter= IN}
+    
+    
+    filterSharedItemShareTo_EQ :: UserId -> RefinedFilter RefinedSharedItem
+    filterSharedItemShareTo_EQ val = RefinedFilter{ refinedFilterField = RefSharedItemShareTo, refinedFilterValue=val,
+                        refinedFilterFilter= EQUAL}
+    
+    filterUserUserName_IN :: Text -> RefinedFilter RefinedUser
+    filterUserUserName_IN val = RefinedFilter{ refinedFilterField = RefUserName, refinedFilterValue=val,
+                        refinedFilterFilter= EQUAL}
+    
         -- getAllsharedFrom :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity SharedItem]
 -- getAllsharedFrom currentUserId = selectList [SharedItemShareTo ==. currentUserId] [Asc SharedItemId]

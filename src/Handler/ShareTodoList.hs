@@ -21,10 +21,12 @@ postShareTodoListR = do
 
     currentUserId <- requireAuthId
     -- let todoItem' = todoItem { todoItemUserId = currentUserId }
-    user <- runDB $ getUserItem uName
+    userTagged <- runDB $ getUserItem' uName
+    let user  = content userTagged
     toUserId <- case user of
-            Nothing -> invalidArgs [T.append "User Not Found::" uName] 
-            Just(Entity k v) -> return k
+            [] -> invalidArgs [T.append "User Not Found::" uName] 
+            [x] -> return $ refUserUserId x
+            (x:xs) -> invalidArgs [T.append "Multiple users with same name:" uName] 
             
     let sharedItem' = SharedItem { sharedItemShareFrom = currentUserId, 
                                    sharedItemShareTo = toUserId }
@@ -34,7 +36,10 @@ postShareTodoListR = do
 
     -- updaterUserItem <- runDB $ updateWhere [UserId ==. currentUserId] [sharedFromUsers =. uName] -- it's been a long day
     -- returnJson updaterUserItem
-getUserItem :: MonadIO m => Text -> ReaderT SqlBackend m (Maybe (Entity User))
-getUserItem uname = selectFirst [UserUserName ==. uname] []
+getUserItem' :: MonadIO m => Text -> ReaderT SqlBackend m (Tagged [RefinedUser])
+getUserItem' uname = selectListUser ((filterUserUserName_IN uname)?:Empty)
+
+-- getUserItem :: MonadIO m => Text -> ReaderT SqlBackend m [Entity User]
+-- getUserItem uname = selectList [UserUserName ==. uname] []
 
     

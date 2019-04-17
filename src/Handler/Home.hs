@@ -29,14 +29,15 @@ getHomeR = do
     let submission = Nothing :: Maybe FileForm
         handlerName = "getHomeR" :: Text
     currentUserId <- requireAuthId
-    allTodoItems <- runDB $ getAllTodoItems currentUserId
+    allTodoItemsTagged <- runDB $ getAllTodoItems' currentUserId
+    let allTodoItems = content allTodoItemsTagged
     -- allTodoItems <- runDB $ selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
-    sharedTodoItemsUsers <- runDB $ getAllsharedFrom currentUserId
-
+    sharedTodoItemsUsersTagged <- runDB $ getAllsharedFrom' currentUserId
+    let sharedTodoItemsUsers = content sharedTodoItemsUsersTagged
     -- sharedTodoItems = do
-    let sharedFromList = entityListtoList sharedTodoItemsUsers
-    sharedTodoItems <- runDB $ getAllSharedItems sharedFromList
-        
+    let sharedFromList = refEntityListtoList sharedTodoItemsUsers
+    sharedTodoItemsTagged <- runDB $ getAllSharedItems' sharedFromList
+    let sharedTodoItems = content sharedTodoItemsTagged
     defaultLayout $ do
         let (commentFormId, commentTextareaId, commentListId) = commentIds
         let   (shareFormId, shareFormAreaId) =  shareIds
@@ -51,19 +52,28 @@ commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")
 shareIds :: (Text, Text)
 shareIds = ("js-shareForm", "js-shareTodoUname")
 
-entityListtoList :: [Entity SharedItem] -> [UserId]
-entityListtoList [] = []
-entityListtoList (x:xs) = sharedFronUserId:(entityListtoList xs)
+refEntityListtoList :: [RefinedSharedItem] -> [UserId]
+refEntityListtoList [] = []
+refEntityListtoList (x:xs) = sharedFronUserId:(refEntityListtoList xs)
         where 
-            sharedFronUserId = sharedItemShareFrom $ entityVal x
+            sharedFronUserId = shareFrom x
 
-getAllSharedItems :: MonadIO m => [UserId] -> ReaderT SqlBackend m [Entity TodoItem]
-getAllSharedItems userIds = selectList [TodoItemUserId <-. userIds] [Asc TodoItemId]
+-- getAllSharedItems :: MonadIO m => [UserId] -> ReaderT SqlBackend m [Entity TodoItem]
+-- getAllSharedItems userIds = selectList [TodoItemUserId <-. userIds] [Asc TodoItemId] 
+
+getAllSharedItems' :: MonadIO m => [UserId] -> ReaderT SqlBackend m(Tagged [RefinedTodoItem])
+getAllSharedItems' userIds = selectListTodoItem((filterTodoItemUserId_IN userIds)?:Empty)
 
 
-getAllTodoItems :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity TodoItem]
-getAllTodoItems currentUserId = selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
+getAllTodoItems' :: MonadIO m => UserId -> ReaderT SqlBackend m (Tagged [RefinedTodoItem])
+getAllTodoItems' currentUserId = selectListTodoItem ((filterTodoItemUserId_EQ currentUserId)?:Empty)
+
+-- getAllTodoItems :: MonadIO m => UserId -> ReaderT SqlBackend m  [Entity TodoItem]
+-- getAllTodoItems currentUserId = selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
 
 
-getAllsharedFrom :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity SharedItem]
-getAllsharedFrom currentUserId = selectList [SharedItemShareTo ==. currentUserId] [Asc SharedItemId]
+getAllsharedFrom' :: MonadIO m => UserId -> ReaderT SqlBackend m (Tagged [RefinedSharedItem])
+getAllsharedFrom' currentUserId = selectListSharedItem ((filterSharedItemShareTo_EQ currentUserId)?:Empty)
+
+-- getAllsharedFrom :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity SharedItem]
+-- getAllsharedFrom currentUserId = selectList [SharedItemShareTo ==. currentUserId] [Asc SharedItemId]

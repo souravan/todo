@@ -21,7 +21,7 @@
                        console log to see the raw response from the server.
                    <ul ##{commentListId}>
                        $forall todoItem <- allTodoItems
-                           <li>#{todoItemTask $ entityVal todoItem}
+                           <li>#{task $ todoItem}
         
         <div .row>
             <div .col-lg-6>
@@ -33,11 +33,12 @@
                         <br>
                         <button .btn.btn-primary type=submit>
                            Share
+        
             <div .col-lg-4.col-lg-offset-1>
                <div .bs-callout.bs-callout-info>
                    <small>
                        Users who shared their todo items with you
                    <ul ##{shareFormId}>
                        $forall todoItem <- sharedTodoItems
-                           <li>#{todoItemTask $ entityVal todoItem}
+                           <li>#{task $ todoItem}
     <hr>
