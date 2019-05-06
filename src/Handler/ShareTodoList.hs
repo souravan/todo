@@ -37,7 +37,7 @@ postShareTodoListR = do
     -- updaterUserItem <- runDB $ updateWhere [UserId ==. currentUserId] [sharedFromUsers =. uName] -- it's been a long day
     -- returnJson updaterUserItem
 getUserItem' :: MonadIO m => Text -> ReaderT SqlBackend m (Tagged [RefinedUser])
-getUserItem' uname = selectListUser ((filterUserUserName_IN uname)?:Empty)
+getUserItem' uname = selectListUser ((filterUserName uname)?:Empty)
 
 -- getUserItem :: MonadIO m => Text -> ReaderT SqlBackend m [Entity User]
 -- getUserItem uname = selectList [UserUserName ==. uname] []

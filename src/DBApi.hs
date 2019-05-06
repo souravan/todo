@@ -76,14 +76,14 @@ module DBApi where
             reader_data = selectList filters []
             filters  = ref_to_pers_filters_TodoItem filterList
             map_entity_toRefTodoItem x = RefinedTodoItem{task = todoItemTask $ entityVal x, refTodoItemTodoItemId = entityKey x, done = todoItemDone $ entityVal x,
-                                                            userId = todoItemUserId $ entityVal x}
+                                                            tuserId = todoItemUserId $ entityVal x}
 
     ref_to_pers_filters_TodoItem::FilterList RefinedTodoItem  -> [Filter Model.TodoItem]
     ref_to_pers_filters_TodoItem Empty = []
     ref_to_pers_filters_TodoItem (Cons f b) = (toPersistentFilterTodoItem f):(ref_to_pers_filters_TodoItem b)
     
 
-    data RefinedTodoItem =RefinedTodoItem {task::Text, refTodoItemTodoItemId::TodoItemId, done::Bool,userId::UserId}
+    data RefinedTodoItem =RefinedTodoItem {task::Text, refTodoItemTodoItemId::TodoItemId, done::Bool,tuserId::UserId}
     -- data FilterList a = Empty | Cons (RefinedFilter a) (FilterList a)
     -- -- data RefinedFilter record = RefinedFilter (Filter record)
 
@@ -118,10 +118,11 @@ module DBApi where
     refentity_entity_TodoItem  RefTodoUserId = TodoItemUserId
 
     --for SharedItem
+    {-@ measure sharedItemProp :: UserId->UserId-> Bool@-}
     {-@ 
     assume selectListSharedItem :: MonadIO m => forall <q :: RefinedSharedItem -> RefinedUser -> Bool, r :: RefinedSharedItem -> Bool, p :: RefinedUser -> Bool>.
     {row :: RefinedSharedItem<r> |- RefinedUser<p> <: RefinedUser<q row>}
-    FilterList<q, r> RefinedSharedItem ->  ReaderT SqlBackend m (Tagged<p> [RefinedSharedItem<r>])
+    FilterList<q, r> RefinedSharedItem ->  ReaderT SqlBackend m (Tagged<p> [{v:RefinedSharedItem<r>|sharedItemProp (shareFrom v) (shareTo v)}])
     @-}
     selectListSharedItem :: MonadIO m => FilterList RefinedSharedItem -> ReaderT SqlBackend m (Tagged [RefinedSharedItem])
     selectListSharedItem filterList =fmap Tagged (fmap (fmap map_entity_toRefSharedItem) reader_data)
@@ -134,6 +135,16 @@ module DBApi where
     ref_to_pers_filters_SharedItem Empty = []
     ref_to_pers_filters_SharedItem (Cons f b) = (toPersistentFilterSharedItem f):(ref_to_pers_filters_SharedItem b)
     
+
+    {-@
+    assume projectSharedItemShareFrom :: forall <r1::RefinedSharedItem -> Bool, r2::UserId -> Bool>.
+      {rsi::RefinedSharedItem<r1> |- UserId<r2> <: {from:UserId | sharedItemProp from (shareTo rsi)}}
+      xs:[RefinedSharedItem<r1>] -> Tagged<{\v -> True}> [UserId<r2>]
+     @-}                                -- ^^^^^^^^^^^ this is the policy on the field ShareFrom
+    projectSharedItemShareFrom :: [RefinedSharedItem] -> Tagged [UserId]
+    projectSharedItemShareFrom input = Tagged {content = fmap (shareFrom) input}
+
+
 
     data RefinedSharedItem =RefinedSharedItem {shareFrom::UserId, shareTo::UserId, refSharedItemSharedItemId :: SharedItemId}
     -- data FilterList a = Empty | Cons (RefinedFilter a) (FilterList a)
@@ -172,6 +183,31 @@ module DBApi where
     data Tagged a = Tagged { content :: a }
         deriving Eq
     
+    instance Functor Tagged where
+        fmap f (Tagged x) = Tagged (f x)
+        
+    instance Applicative Tagged where
+        pure  = Tagged
+        -- f (a -> b) -> f a -> f b
+        (Tagged f) <*> (Tagged x) = Tagged (f x)
+    
+    instance Monad Tagged where
+        return x = Tagged x
+        (Tagged x) >>= f = f x
+        (Tagged _) >>  t = t
+        fail          = error
+    
+    {-@ instance Monad Tagged where
+        >>= :: forall <p :: User -> Bool, f:: a -> b -> Bool>.
+                x:Tagged <p> a
+            -> (u:a -> Tagged <p> (b <f u>))
+            -> Tagged <p> (b<f (content x)>);
+        >>  :: forall <p :: User -> Bool>.
+                x:Tagged<{\v -> false}> a
+            -> Tagged<p> b
+            -> Tagged<p> b;
+        return :: a -> Tagged <{\v -> true}> a
+    @-}
     {-@
         data FilterList a <q :: a -> User -> Bool, r :: a -> Bool> where
             Empty :: FilterList<{\_ _ -> True}, {\_ -> True}> a
@@ -237,34 +273,43 @@ module DBApi where
     filterUserName val = RefinedFilter{ refinedFilterField = RefUserName, refinedFilterValue=val,
                          refinedFilterFilter= EQUAL}
 
-    {-@ filterSharedTo ::
-        val: UserId -> RefinedFilter<{\row -> sharedTo row == val}, {\row v -> True}> RefinedSharedItem @-}
-    filterSharedTo :: UserId -> RefinedFilter RefinedSharedItem
-    filterSharedTo val = RefinedFilter{ refinedFilterField = RefSharedItemShareTo, refinedFilterValue=val,
-                        refinedFilterFilter= EQUAL}
+    -- {-@ filterSharedTo ::
+    --     val: UserId -> RefinedFilter<{\row -> sharedTo row == val}, {\row v -> True}> RefinedSharedItem @-}
+    -- filterSharedTo :: UserId -> RefinedFilter RefinedSharedItem
+    -- filterSharedTo val = RefinedFilter{ refinedFilterField = RefSharedItemShareTo, refinedFilterValue=val,
+    --                     refinedFilterFilter= EQUAL}
     
-    {-@ filterSharedFrom ::
+    {-@ filterSharedItemShareFrom_EQ ::
     val: UserId -> RefinedFilter<{\row -> sharedFrom row == val}, {\row v -> True}> RefinedSharedItem @-}
-    filterSharedFrom :: UserId -> RefinedFilter RefinedSharedItem
-    filterSharedFrom val = RefinedFilter{ refinedFilterField = RefSharedItemShareFrom, refinedFilterValue=val,
+    filterSharedItemShareFrom_EQ :: UserId -> RefinedFilter RefinedSharedItem
+    filterSharedItemShareFrom_EQ val = RefinedFilter{ refinedFilterField = RefSharedItemShareFrom, refinedFilterValue=val,
                         refinedFilterFilter= EQUAL}
     
+    {-@ filterTodoItemUserId_EQ ::
+    val: UserId -> RefinedFilter<{\row -> tuserId row == val}, 
+            {\row v -> tuserId row == refUserUserId v || sharedItemProp (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
     filterTodoItemUserId_EQ :: UserId -> RefinedFilter RefinedTodoItem
     filterTodoItemUserId_EQ val = RefinedFilter{ refinedFilterField = RefTodoUserId, refinedFilterValue=val,
                         refinedFilterFilter= EQUAL}
+    
+    
+    -- {-@ filterTodoItemUserId_IN ::
+    -- val: Int -> RefinedFilter<{\row -> tuserId row == val}, 
+    --         {\row v -> tuserId row == refUserUserId v || sharedItemProp (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
 
+    {-@ filterTodoItemUserId_IN :: forall <r::UserId -> Bool, f :: RefinedTodoItem -> Bool>.
+    { v::UserId<r> |- RefinedTodoItem<f> <: RefinedTodoItem<{\r -> tuserId r == v}> }
+        val: [UserId<r>] -> RefinedFilter<f, {\row v -> tuserId row == refUserUserId v || sharedItemProp  (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
     filterTodoItemUserId_IN ::  [UserId] -> RefinedFilter RefinedTodoItem
     filterTodoItemUserId_IN val = RefinedFilter{ refinedFilterField = RefTodoUserId, refinedFilterLValue=val,
                         refinedFilterFilter= IN}
     
-    
+    {-@ filterSharedItemShareTo_EQ ::
+        val: UserId -> RefinedFilter<{\row -> sharedTo row == val}, {\row v -> True}> RefinedSharedItem @-}
     filterSharedItemShareTo_EQ :: UserId -> RefinedFilter RefinedSharedItem
     filterSharedItemShareTo_EQ val = RefinedFilter{ refinedFilterField = RefSharedItemShareTo, refinedFilterValue=val,
                         refinedFilterFilter= EQUAL}
     
-    filterUserUserName_IN :: Text -> RefinedFilter RefinedUser
-    filterUserUserName_IN val = RefinedFilter{ refinedFilterField = RefUserName, refinedFilterValue=val,
-                        refinedFilterFilter= EQUAL}
     
         -- getAllsharedFrom :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity SharedItem]
 -- getAllsharedFrom currentUserId = selectList [SharedItemShareTo ==. currentUserId] [Asc SharedItemId]

@@ -4,6 +4,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 module Handler.Home where
+{-@ LIQUID "--ple" @-} 
 
 -- import Import
 import DBApi
@@ -33,9 +34,16 @@ getHomeR = do
     let allTodoItems = content allTodoItemsTagged
     -- allTodoItems <- runDB $ selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
     sharedTodoItemsUsersTagged <- runDB $ getAllsharedFrom' currentUserId
-    let sharedTodoItemsUsers = content sharedTodoItemsUsersTagged
+    let projectTest = ( 
+            do
+                sharedList <-  projectSharedItemShareFrom (content sharedTodoItemsUsersTagged)
+                return sharedList
+                      )
+        
+    -- let sharedTodoItemsUsers = content sharedTodoItemsUsersTagged
     -- sharedTodoItems = do
-    let sharedFromList = refEntityListtoList sharedTodoItemsUsers
+    let sharedFromList = content projectTest
+    -- let sharedFromList = refEntityListtoList sharedTodoItemsUsers
     sharedTodoItemsTagged <- runDB $ getAllSharedItems' sharedFromList
     let sharedTodoItems = content sharedTodoItemsTagged
     defaultLayout $ do
