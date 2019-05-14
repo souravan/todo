@@ -1,5 +1,5 @@
 {-# LANGUAGE CPP               #-}
-{-# LANGUAGE NoImplicitPrelude #-}
+-- {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards   #-}
 {-# LANGUAGE TemplateHaskell   #-}
@@ -9,8 +9,9 @@
 -- by overriding methods in the Yesod typeclass. That instance is
 -- declared in the Foundation.hs file.
 module Settings where
-
-import ClassyPrelude.Yesod
+ 
+import ClassyPrelude.Yesod 
+import qualified Prelude as P
 import qualified Control.Exception as Exception
 import Data.Aeson                  (Result (..), fromJSON, withObject, (.!=),
                                     (.:?))
@@ -130,6 +131,8 @@ compileTimeAppSettings =
     case fromJSON $ applyEnvValue False mempty configSettingsYmlValue of
         Error e -> error e
         Success settings -> settings
+
+{-@ assume error :: String -> a @-}    
 
 -- The following two functions can be used to combine multiple CSS or JS files
 -- at compile time to decrease the number of http requests.

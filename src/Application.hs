@@ -1,4 +1,4 @@
-{-# LANGUAGE NoImplicitPrelude #-}
+-- {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -44,6 +44,7 @@ import Handler.Common
 import Handler.Home
 import Handler.TodoItem
 import Handler.ShareTodoList
+import qualified Prelude as P
 -- This line actually creates our YesodDispatch instance. It is the second half
 -- of the call to mkYesodData which occurs in Foundation.hs. Please see the
 -- comments there for more details.
