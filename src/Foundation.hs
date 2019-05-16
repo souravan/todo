@@ -1,6 +1,6 @@
 -- {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
+-- {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE ViewPatterns #-}
@@ -27,6 +27,8 @@ import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
 import qualified Data.CaseInsensitive as CI
 import qualified Data.Text.Encoding as TE
+
+import Yesod.Core -- qualified Yesod.Routes.Class
 
 -- | The foundation datatype for your application. This can be a good place to
 -- keep settings and values requiring initialization before your application
@@ -62,7 +64,8 @@ data MenuTypes
 -- This function also generates the following type synonyms:
 -- type Handler = HandlerT App IO
 -- type Widget = WidgetT App IO ()
-mkYesodData "App" $(parseRoutesFile "config/routes")
+-- LIQUID-TH-HASSLES: mkYesodData "App" $(parseRoutesFile "config/routes")
+
 
 -- | A convenient synonym for creating forms.
 type Form x = Html -> MForm (HandlerFor App) (FormResult x, Widget)
@@ -133,8 +136,8 @@ instance Yesod App where
 
         pc <- widgetToPageContent $ do
             addStylesheet $ StaticR css_bootstrap_css
-            $(widgetFile "default-layout")
-        withUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
+            undefined -- LIQUID-TH: $(widgetFile "default-layout")
+        undefined -- LIQUID-TH: withUrlRenderer $(hamletFile "templates/default-layout-wrapper.hamlet")
 
     -- The page to be redirected to when authentication is required.
     authRoute
@@ -277,3 +280,168 @@ unsafeHandler = Unsafe.fakeHandlerGetLogger appLogger
 -- https://github.com/yesodweb/yesod/wiki/Sending-email
 -- https://github.com/yesodweb/yesod/wiki/Serve-static-files-from-a-separate-domain
 -- https://github.com/yesodweb/yesod/wiki/i18n-messages-in-the-scaffolding
+--
+--
+--
+-- LIQUID-TH-HASSLES
+--
+-- src/Foundation.hs:65:1-52: Splicing declarations
+instance ParseRoute App where
+  parseRoute
+    = ((\ f_aesH x_aesI -> (f_aesH ()) x_aesI) ::
+         (()
+          -> ([Text],
+              [(Text, Text)])
+             -> Maybe (Route a_aesJ))
+         -> ([Text],
+             [(Text, Text)])
+            -> Maybe (Route a_aesJ))
+        helper_aesG
+    where
+        helper_aesG env1258_aesd req1258_aese
+          = helper1258_aesf (fst req1258_aese)
+          where
+              helper1258_aesf ((:) "static" restPath_aesh)
+                = (((((\ _runHandler_aesk _getSub_aesl toMaster_aesm _env_aesn
+                         -> (fmap toMaster_aesm
+                               . parseRoute))
+                        (\ _ _ x_aeso _ -> x_aeso))
+                       (\ sub_aesp -> appStatic sub_aesp))
+                      (\ sroute_aesq -> StaticR sroute_aesq))
+                     env1258_aesd)
+                    (((\ p_aesi (_, q_aesj) -> (p_aesi, q_aesj)) restPath_aesh)
+                       req1258_aese)
+              helper1258_aesf ((:) "favicon.ico" [])
+                = ((((\ _ _ x_aesr _ -> x_aesr) (error "mdsGetHandler"))
+                      env1258_aesd)
+                     (Just FaviconR))
+                    req1258_aese
+              helper1258_aesf ((:) "robots.txt" [])
+                = ((((\ _ _ x_aess _ -> x_aess) (error "mdsGetHandler"))
+                      env1258_aesd)
+                     (Just RobotsR))
+                    req1258_aese
+              helper1258_aesf []
+                = ((((\ _ _ x_aest _ -> x_aest) (error "mdsGetHandler"))
+                      env1258_aesd)
+                     (Just HomeR))
+                    req1258_aese
+              helper1258_aesf ((:) "todo-item" [])
+                = ((((\ _ _ x_aesu _ -> x_aesu) (error "mdsGetHandler"))
+                      env1258_aesd)
+                     (Just TodoItemR))
+                    req1258_aese
+              helper1258_aesf ((:) "shared-items" [])
+                = ((((\ _ _ x_aesv _ -> x_aesv) (error "mdsGetHandler"))
+                      env1258_aesd)
+                     (Just ShareTodoListR))
+                    req1258_aese
+              helper1258_aesf ((:) "auth" restPath_aesw)
+                = (((((\ _runHandler_aesz _getSub_aesA toMaster_aesB _env_aesC
+                         -> (fmap toMaster_aesB
+                               . parseRoute))
+                        (\ _ _ x_aesD _ -> x_aesD))
+                       (\ sub_aesE -> getAuth sub_aesE))
+                      (\ sroute_aesF -> AuthR sroute_aesF))
+                     env1258_aesd)
+                    (((\ p_aesx (_, q_aesy) -> (p_aesx, q_aesy)) restPath_aesw)
+                       req1258_aese)
+              helper1258_aesf _
+                = ((((\ _ _ x_aesg _ -> x_aesg) (error "mds404"))
+                      env1258_aesd)
+                     Nothing)
+                    req1258_aese
+instance RenderRoute App where
+  data Route App
+    = StaticR (Route Static) |
+      FaviconR |
+      RobotsR |
+      HomeR |
+      TodoItemR |
+      ShareTodoListR |
+      AuthR (Route Auth)
+    deriving (Show, Eq, Read)
+  renderRoute (StaticR sub_aerM)
+    = (\ (a_aerN, b_aerO)
+         -> ((pack "static" : a_aerN), b_aerO))
+        (renderRoute sub_aerM)
+  renderRoute FaviconR = ((pack "favicon.ico" : []), [])
+  renderRoute RobotsR = ((pack "robots.txt" : []), [])
+  renderRoute HomeR = ([], [])
+  renderRoute TodoItemR = ((pack "todo-item" : []), [])
+  renderRoute ShareTodoListR
+    = ((pack "shared-items" : []), [])
+  renderRoute (AuthR sub_aerP)
+    = (\ (a_aerQ, b_aerR)
+         -> ((pack "auth" : a_aerQ), b_aerR))
+        (renderRoute sub_aerP)
+instance RouteAttrs App where
+  routeAttrs _ = undefined 
+
+ {- LIQUID-TH
+  routeAttrs StaticR {}
+    = fromList []
+  routeAttrs FaviconR {}
+    = fromList []
+  routeAttrs RobotsR {}
+    = fromList []
+  routeAttrs HomeR {}
+    = fromList []
+  routeAttrs TodoItemR {}
+    = fromList []
+  routeAttrs ShareTodoListR {}
+    = fromList []
+  routeAttrs AuthR {}
+    = fromList []
+  -}
+
+{- LIQUID-TH 
+
+resourcesApp :: [ResourceTree String]
+resourcesApp
+  = [ResourceLeaf
+       (((((Resource "StaticR")
+             [Static "static"])
+            ((Subsite "Static") "appStatic"))
+           [])
+          True),
+     ResourceLeaf
+       (((((Resource "FaviconR")
+             [Static "favicon.ico"])
+            ((Methods Nothing) ["GET"]))
+           [])
+          True),
+     ResourceLeaf
+       (((((Resource "RobotsR")
+             [Static "robots.txt"])
+            ((Methods Nothing) ["GET"]))
+           [])
+          True),
+     ResourceLeaf
+       (((((Resource "HomeR") [])
+            ((Methods Nothing) ["GET"]))
+           [])
+          True),
+     ResourceLeaf
+       (((((Resource "TodoItemR")
+             [Static "todo-item"])
+            ((Methods Nothing) ["POST"]))
+           [])
+          True),
+     ResourceLeaf
+       (((((Resource "ShareTodoListR")
+             [Static "shared-items"])
+            ((Methods Nothing) ["POST"]))
+           [])
+          True),
+     ResourceLeaf
+       (((((Resource "AuthR")
+             [Static "auth"])
+            ((Subsite "Auth") "getAuth"))
+           [])
+          True)]
+
+-}
+
+type Handler = HandlerFor App
+type Widget = WidgetFor App ()

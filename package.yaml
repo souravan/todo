@@ -9,6 +9,7 @@ dependencies:
 
 - yesod 
 - yesod-core 
+- yesod-routes
 - yesod-auth 
 - yesod-static 
 - yesod-form
