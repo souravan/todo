@@ -235,7 +235,33 @@ refentity_entity_SharedItem   RefSharedItemShareTo = SharedItemShareTo
 refentity_entity_SharedItem   RefSharedItemShareFrom = SharedItemShareFrom
 refentity_entity_SharedItem   _                    = Prelude.undefined
 
+-- {-@ reflect untag @-}
+-- untag :: (YesodAuth site, YesodPersist site, AuthId site ~ Key User, YesodPersistBackend site ~ SqlBackend) => Tagged a -> HandlerFor site a
+-- untag tagged = do
+--   maybeViewer <- maybeAuthId
+--   case maybeViewer of
+--     Nothing -> return $ untagTrue tagged
+--     Just viewer -> do
+--       -- We need LH to know that maybeAuthId and requireAuthId give the same id
+--       viewer' <- requireAuthId
+--       if viewer == viewer' then do
+--         taggedViewerList <- runDB $ selectListUser (filterUserId viewer ?: Empty)
+--         case content taggedViewerList of
+--           [] -> Prelude.undefined -- unreachable
+--           (user:_) -> return $ untagViewer user tagged
+--       else Prelude.undefined -- unreachable
 
+-- {-@ untagTrue :: Tagged<{\_ -> True}> _ -> _ @-}
+-- untagTrue :: Tagged a -> a
+-- untagTrue = content
+
+-- -- Do not export this:
+-- {-@
+-- untagViewer :: forall <r::RefinedUser -> Bool>.
+--   viewer:RefinedUser<r> -> Tagged<{\v -> refUserUserId v == viewer}> _ -> _
+-- @-}
+-- untagViewer :: RefinedUser -> Tagged a -> a
+-- untagViewer _ = content
 
 --- common stuff
 {-@ data Tagged a <p :: RefinedUser -> Bool> = Tagged { content :: a } @-}
@@ -340,6 +366,9 @@ data RefinedEntityField a b where
 
 
 data RefinedPersistFilter = EQUAL | NE | LE | LTP | GE | GTP | IN | NOTIN
+
+{-@ filterUserId :: val: UserId -> RefinedFilter<{\row -> refUserUserId row == val}, {\row v -> True}> RefinedUser @-}
+filterUserId val = RefinedFilter $ TestRefinedFilterUserId RefUserId val Prelude.undefined EQUAL
 
 {-@ filterUserName ::
     val: Text -> RefinedFilter<{\row -> userName row == val}, {\row v -> True}> RefinedUser @-}

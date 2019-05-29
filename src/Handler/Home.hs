@@ -18,6 +18,8 @@ data FileForm = FileForm
     , fileDescription :: Text
     }
 
+foo = tuserId
+
 -- This is a handler function for the GET request method on the HomeR
 -- resource pattern. All of your resource patterns are defined in
 -- config/routes
@@ -36,6 +38,7 @@ getHomeR = do
     let allTodoItems = content allTodoItemsTagged
     -- allTodoItems <- runDB $ selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
     sharedTodoItemsUsersTagged <- runDB $ getAllsharedFrom' currentUserId
+    let _ = checkPolicy currentUserId sharedTodoItemsUsersTagged
     let projectTest = ( 
             do
                 sharedList <-  projectSharedItemShareFrom (content sharedTodoItemsUsersTagged)
@@ -59,6 +62,9 @@ getHomeR = do
 commentIds :: (Text, Text, Text)
 commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")
 
+{-@ checkPolicy :: currentUserId:_ -> Tagged<{\v -> currentUserId == refUserUserId v}> _ -> () @-}
+checkPolicy :: UserId -> Tagged a -> ()
+checkPolicy _ _ = ()
 
 shareIds :: (Text, Text)
 shareIds = ("js-shareForm", "js-shareTodoUname")
@@ -72,11 +78,10 @@ refEntityListtoList (x:xs) = sharedFronUserId:(refEntityListtoList xs)
 -- getAllSharedItems :: MonadIO m => [UserId] -> ReaderT SqlBackend m [Entity TodoItem]
 -- getAllSharedItems userIds = selectList [TodoItemUserId <-. userIds] [Asc TodoItemId] 
 
-{-@getAllSharedItems' ::forall<r::UserId->Bool>. currentUserId:UserId->[UserId] -> ReaderT SqlBackend _ (Tagged<{\v-> True}> [RefinedTodoItem<{\_->True}>])@-}
+{-@getAllSharedItems' :: forall <r::UserId->Bool, f::RefinedTodoItem -> Bool, p::RefinedUser -> Bool>. currentUserId:UserId->[UserId<r>] -> ReaderT SqlBackend _ (Tagged<p> [RefinedTodoItem<f>])@-}
 getAllSharedItems' :: MonadIO m => UserId-> [UserId] -> ReaderT SqlBackend m(Tagged [RefinedTodoItem])
 getAllSharedItems' currentUserId userIds = selectListTodoItem (testFilter?:Empty)
             where
-                {-@testFilter::RefinedFilter<{\_ ->False}, {\row v -> tuserId row == refUserUserId v || sharedItemProp  (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
                 testFilter = (filterTodoItemUserId_IN userIds)
 
 {-@getAllTodoItems' :: currentUserId:UserId -> ReaderT SqlBackend _ (Tagged<{\v-> refUserUserId v== currentUserId}> [RefinedTodoItem])@-}

@@ -3,6 +3,9 @@ version: "0.0.0"
 
 dependencies:
 
+# TODO: Remove
+- ghc-prim
+
 # Due to a bug in GHC 8.0.1, we block its usage
 # See: https://ghc.haskell.org/trac/ghc/ticket/12130
 - base

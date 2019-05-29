@@ -378,70 +378,64 @@ instance RenderRoute App where
 instance RouteAttrs App where
   routeAttrs _ = undefined 
 
- {- LIQUID-TH
-  routeAttrs StaticR {}
-    = fromList []
-  routeAttrs FaviconR {}
-    = fromList []
-  routeAttrs RobotsR {}
-    = fromList []
-  routeAttrs HomeR {}
-    = fromList []
-  routeAttrs TodoItemR {}
-    = fromList []
-  routeAttrs ShareTodoListR {}
-    = fromList []
-  routeAttrs AuthR {}
-    = fromList []
-  -}
+  -- routeAttrs StaticR {}
+  --   = fromList []
+  -- routeAttrs FaviconR {}
+  --   = fromList []
+  -- routeAttrs RobotsR {}
+  --   = fromList []
+  -- routeAttrs HomeR {}
+  --   = fromList []
+  -- routeAttrs TodoItemR {}
+  --   = fromList []
+  -- routeAttrs ShareTodoListR {}
+  --   = fromList []
+  -- routeAttrs AuthR {}
+  --   = fromList []
 
-{- LIQUID-TH 
-
-resourcesApp :: [ResourceTree String]
-resourcesApp
-  = [ResourceLeaf
-       (((((Resource "StaticR")
-             [Static "static"])
-            ((Subsite "Static") "appStatic"))
-           [])
-          True),
-     ResourceLeaf
-       (((((Resource "FaviconR")
-             [Static "favicon.ico"])
-            ((Methods Nothing) ["GET"]))
-           [])
-          True),
-     ResourceLeaf
-       (((((Resource "RobotsR")
-             [Static "robots.txt"])
-            ((Methods Nothing) ["GET"]))
-           [])
-          True),
-     ResourceLeaf
-       (((((Resource "HomeR") [])
-            ((Methods Nothing) ["GET"]))
-           [])
-          True),
-     ResourceLeaf
-       (((((Resource "TodoItemR")
-             [Static "todo-item"])
-            ((Methods Nothing) ["POST"]))
-           [])
-          True),
-     ResourceLeaf
-       (((((Resource "ShareTodoListR")
-             [Static "shared-items"])
-            ((Methods Nothing) ["POST"]))
-           [])
-          True),
-     ResourceLeaf
-       (((((Resource "AuthR")
-             [Static "auth"])
-            ((Subsite "Auth") "getAuth"))
-           [])
-          True)]
-
--}
+--resourcesApp :: [ResourceTree String]
+resourcesApp = undefined
+  -- = [ResourceLeaf
+  --      (((((Resource "StaticR")
+  --            [Static "static"])
+  --           ((Subsite "Static") "appStatic"))
+  --          [])
+  --         True),
+  --    ResourceLeaf
+  --      (((((Resource "FaviconR")
+  --            [Static "favicon.ico"])
+  --           ((Methods Nothing) ["GET"]))
+  --          [])
+  --         True),
+  --    ResourceLeaf
+  --      (((((Resource "RobotsR")
+  --            [Static "robots.txt"])
+  --           ((Methods Nothing) ["GET"]))
+  --          [])
+  --         True),
+  --    ResourceLeaf
+  --      (((((Resource "HomeR") [])
+  --           ((Methods Nothing) ["GET"]))
+  --          [])
+  --         True),
+  --    ResourceLeaf
+  --      (((((Resource "TodoItemR")
+  --            [Static "todo-item"])
+  --           ((Methods Nothing) ["POST"]))
+  --          [])
+  --         True),
+  --    ResourceLeaf
+  --      (((((Resource "ShareTodoListR")
+  --            [Static "shared-items"])
+  --           ((Methods Nothing) ["POST"]))
+  --          [])
+  --         True),
+  --    ResourceLeaf
+  --      (((((Resource "AuthR")
+  --            [Static "auth"])
+  --           ((Subsite "Auth") "getAuth"))
+  --          [])
+  --         True)]
 
 type Handler = HandlerFor App
 type Widget = WidgetFor App ()
