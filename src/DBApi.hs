@@ -341,17 +341,17 @@ data RefinedEntityField a b where
 
 data RefinedPersistFilter = EQUAL | NE | LE | LTP | GE | GTP | IN | NOTIN
 
--- {-@ filterUserName ::
---     val: Text -> RefinedFilter<{\row -> userName row == val}, {\row v -> True}> RefinedUser @-}
--- filterUserName :: Text -> RefinedFilter RefinedUser
--- filterUserName val = RefinedFilter (TestRefinedFilterText{ refinedFilterFieldText = RefUserName,
---                      refinedFilterValueText=val, refinedFilterFilter= EQUAL})
+{-@ filterUserName ::
+    val: Text -> RefinedFilter<{\row -> userName row == val}, {\row v -> True}> RefinedUser @-}
+filterUserName :: Text -> RefinedFilter RefinedUser
+filterUserName val = RefinedFilter (TestRefinedFilterText{ refinedFilterFieldText = RefUserName,
+                     refinedFilterValueText=val, refinedFilterFilter= EQUAL})
 
--- {-@ filterSharedTo ::
---     val: UserId -> RefinedFilter<{\row -> sharedTo row == val}, {\row v -> True}> RefinedSharedItem @-}
--- filterSharedTo :: UserId -> RefinedFilter RefinedSharedItem
--- filterSharedTo val = RefinedFilter ( TestRefinedFilterUserId{refinedFilterFieldUserId = RefSharedItemShareTo, refinedFilterValueUserId=val,
---                     refinedFilterFilter= EQUAL)
+{-@ filterSharedTo ::
+    val: UserId -> RefinedFilter<{\row -> sharedTo row == val}, {\row v -> True}> RefinedSharedItem @-}
+filterSharedTo :: UserId -> RefinedFilter RefinedSharedItem
+filterSharedTo val = RefinedFilter ( TestRefinedFilterUserId{refinedFilterFieldUserId = RefSharedItemShareTo, refinedFilterValueUserId=val,
+                    refinedFilterFilter= EQUAL)
 
 
 {-@ filterSharedItemShareFrom_EQ ::
