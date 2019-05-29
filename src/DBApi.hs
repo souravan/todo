@@ -111,29 +111,8 @@ ref_to_pers_filters_TodoItem Empty = []
 ref_to_pers_filters_TodoItem (Cons f b) = (toPersistentFilterTodoItem f):(ref_to_pers_filters_TodoItem b)
 
 
--- data FilterList a = Empty | Cons (RefinedFilter a) (FilterList a)
--- -- data RefinedFilter record = RefinedFilter (Filter record)
-
--- data RefinedFilter record = forall typ.PersistField typ => RefinedFilter
---     { refinedFilterField  :: RefinedEntityField record typ
---     , refinedFilterValue  :: typ
---     , refinedFilterFilter :: RefinedPersistFilter
---     } 
-
 {-@toPersistentFilterTodoItem::  RefinedFilter<{\_  -> True}, {\_ _ -> False}> RefinedTodoItem -> _ @-}
 toPersistentFilterTodoItem :: RefinedFilter RefinedTodoItem -> Filter TodoItem
--- toPersistentFilterTodoItem (RefinedFilter f value lvalue filter) =
---     case filter of
---         EQUAL -> field ==. value
---         NE -> field !=. value
---         LE -> field <=. value
---         LTP -> field <. value
---         GE -> field >=. value
---         GTP -> field >. value
---         IN -> field <-. lvalue
---         NOTIN -> field /<-. lvalue
---         where
---             field = (refentity_entity_TodoItem  f)
 toPersistentFilterTodoItem (RefinedFilter (TestRefinedFilterText f value lvalue filter)) =
     case filter of
         EQUAL -> field ==. value
@@ -171,10 +150,6 @@ toPersistentFilterTodoItem (RefinedFilter (TestRefinedFilterBool f value lvalue 
         where
             field = (refentity_entity_TodoItem f)
 
--- data RefinedEntityField a b where
---     RefUserName :: RefinedEntityField RefinedTodoItem Text
-
--- data RefinedPersistFilter = EQUAL | NE | LE | LTP | GE | GTP
 
 refentity_entity_TodoItem  :: RefinedEntityField RefinedTodoItem b ->  EntityField  TodoItem b
 refentity_entity_TodoItem  RefTodoTask = TodoItemTask
@@ -216,30 +191,8 @@ projectSharedItemShareFrom :: [RefinedSharedItem] -> Tagged [UserId]
 projectSharedItemShareFrom input = Tagged {content = fmap (shareFrom) input}
 
 
-
--- data FilterList a = Empty | Cons (RefinedFilter a) (FilterList a)
--- -- data RefinedFilter record = RefinedFilter (Filter record)
-
--- data RefinedFilter record = forall typ.PersistField typ => RefinedFilter
---     { refinedFilterField  :: RefinedEntityField record typ
---     , refinedFilterValue  :: typ
---     , refinedFilterFilter :: RefinedPersistFilter
---     } 
-
 {-@toPersistentFilterSharedItem::  RefinedFilter<{\_  -> True}, {\_ _ -> False}> RefinedSharedItem -> _ @-}
 toPersistentFilterSharedItem  :: RefinedFilter RefinedSharedItem  -> Filter SharedItem 
--- toPersistentFilterSharedItem  (RefinedFilter f value lvalue filter) =
---     case filter of
---         EQUAL -> field ==. value
---         NE -> field !=. value
---         LE -> field <=. value
---         LTP -> field <. value
---         GE -> field >=. value
---         GTP -> field >. value
---         IN -> field <-. lvalue
---         NOTIN -> field /<-. lvalue
---         where
---             field = (refentity_entity_SharedItem   f)
 toPersistentFilterSharedItem (RefinedFilter (TestRefinedFilterText f value lvalue filter)) =
     case filter of
         EQUAL -> field ==. value
@@ -276,11 +229,6 @@ toPersistentFilterSharedItem (RefinedFilter (TestRefinedFilterBool f value lvalu
         NOTIN -> field /<-. lvalue
         where
             field = (refentity_entity_SharedItem f)
-
--- data RefinedEntityField a b where
---     RefUserName :: RefinedEntityField RefinedTodoItem Text
-
--- data RefinedPersistFilter = EQUAL | NE | LE | LTP | GE | GTP
 
 refentity_entity_SharedItem   :: RefinedEntityField RefinedSharedItem  b ->  EntityField  SharedItem b
 refentity_entity_SharedItem   RefSharedItemShareTo = SharedItemShareTo
@@ -392,76 +340,43 @@ data RefinedEntityField a b where
 
 
 data RefinedPersistFilter = EQUAL | NE | LE | LTP | GE | GTP | IN | NOTIN
--- data RefinedFilterTypes =  Bool |  Text | UserId
--- class RefinedFilterTypes a where
---     dummy :: a -> Bool
---     dummy _ = True
--- instance RefinedFilterTypes Bool
--- instance RefinedFilterTypes Text
--- instance RefinedFilterTypes UserId
 
--- class RefinedFilter record  =  forall typ.PersistField typ => RefinedFilter
---     { refinedFilterField  :: RefinedEntityField record typ
---     , refinedFilterValue  :: typ
---     , refinedFilterLValue  :: [typ]
---     , refinedFilterFilter :: RefinedPersistFilter
---     } 
--- instance RefinedFilter  Bool record
--- instance RefinedFilter Text record
--- instance RefinedFilter UserId record
-
--- data Filter a = Filter
-
-{-@ filterUserName ::
-    val: Text -> RefinedFilter<{\row -> userName row == val}, {\row v -> True}> RefinedUser @-}
-filterUserName :: Text -> RefinedFilter RefinedUser
-filterUserName val = RefinedFilter (TestRefinedFilterText{ refinedFilterFieldText = RefUserName,
-                     refinedFilterValueText=val, refinedFilterFilter= EQUAL})
+-- {-@ filterUserName ::
+--     val: Text -> RefinedFilter<{\row -> userName row == val}, {\row v -> True}> RefinedUser @-}
+-- filterUserName :: Text -> RefinedFilter RefinedUser
+-- filterUserName val = RefinedFilter (TestRefinedFilterText{ refinedFilterFieldText = RefUserName,
+--                      refinedFilterValueText=val, refinedFilterFilter= EQUAL})
 
 -- {-@ filterSharedTo ::
 --     val: UserId -> RefinedFilter<{\row -> sharedTo row == val}, {\row v -> True}> RefinedSharedItem @-}
 -- filterSharedTo :: UserId -> RefinedFilter RefinedSharedItem
--- filterSharedTo val = RefinedFilter{ refinedFilterField = RefSharedItemShareTo, refinedFilterValue=val,
---                     refinedFilterFilter= EQUAL}
+-- filterSharedTo val = RefinedFilter ( TestRefinedFilterUserId{refinedFilterFieldUserId = RefSharedItemShareTo, refinedFilterValueUserId=val,
+--                     refinedFilterFilter= EQUAL)
 
-{-
+
 {-@ filterSharedItemShareFrom_EQ ::
-val: UserId -> RefinedFilter<{\row -> sharedFrom row == val}, {\row v -> True}> RefinedSharedItem @-}
+val: UserId -> RefinedFilter<{\row -> shareFrom row == val}, {\row v -> True}> RefinedSharedItem @-}
 filterSharedItemShareFrom_EQ :: UserId -> RefinedFilter RefinedSharedItem
-filterSharedItemShareFrom_EQ val = RefinedFilter{ refinedFilterField = RefSharedItemShareFrom, refinedFilterValue=val,
-                    refinedFilterFilter= EQUAL}
+filterSharedItemShareFrom_EQ val = RefinedFilter ( TestRefinedFilterUserId{refinedFilterFieldUserId = RefSharedItemShareFrom, refinedFilterValueUserId=val,
+                    refinedFilterFilter= EQUAL})
 
 {-@ filterTodoItemUserId_EQ ::
 val: UserId -> RefinedFilter<{\row -> tuserId row == val}, 
         {\row v -> tuserId row == refUserUserId v || sharedItemProp (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
 filterTodoItemUserId_EQ :: UserId -> RefinedFilter RefinedTodoItem
-filterTodoItemUserId_EQ val = RefinedFilter{ refinedFilterField = RefTodoUserId, refinedFilterValue=val,
-                    refinedFilterFilter= EQUAL}
+filterTodoItemUserId_EQ val = RefinedFilter( TestRefinedFilterUserId{ refinedFilterFieldUserId = RefTodoUserId, refinedFilterValueUserId=val,
+                    refinedFilterFilter= EQUAL})
 
-
--- {-@ filterTodoItemUserId_IN ::
--- val: Int -> RefinedFilter<{\row -> tuserId row == val}, 
---         {\row v -> tuserId row == refUserUserId v || sharedItemProp (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
 
 {-@ filterTodoItemUserId_IN :: forall <r::UserId -> Bool, f :: RefinedTodoItem -> Bool>.
 { v::UserId<r> |- RefinedTodoItem<f> <: RefinedTodoItem<{\r -> tuserId r == v}> }
     val: [UserId<r>] -> RefinedFilter<f, {\row v -> tuserId row == refUserUserId v || sharedItemProp  (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
 filterTodoItemUserId_IN ::  [UserId] -> RefinedFilter RefinedTodoItem
-filterTodoItemUserId_IN val = RefinedFilter{ refinedFilterField = RefTodoUserId, refinedFilterLValue=val,
-                    refinedFilterFilter= IN}
+filterTodoItemUserId_IN val = RefinedFilter( TestRefinedFilterUserId {refinedFilterFieldUserId = RefTodoUserId, refinedFilterLValueUserId=val,
+                    refinedFilterFilter= IN})
 
 {-@ filterSharedItemShareTo_EQ ::
-    val: UserId -> RefinedFilter<{\row -> sharedTo row == val}, {\row v -> True}> RefinedSharedItem @-}
+    val: UserId -> RefinedFilter<{\row -> shareTo row == val}, {\row v -> True}> RefinedSharedItem @-}
 filterSharedItemShareTo_EQ :: UserId -> RefinedFilter RefinedSharedItem
-filterSharedItemShareTo_EQ val = RefinedFilter{ refinedFilterField = RefSharedItemShareTo, refinedFilterValue=val,
-                    refinedFilterFilter= EQUAL}
-
-    
-        -- getAllsharedFrom :: MonadIO m => UserId -> ReaderT SqlBackend m [Entity SharedItem]
--- getAllsharedFrom currentUserId = selectList [SharedItemShareTo ==. currentUserId] [Asc SharedItemId]
--}
-
--- {-@ measure test :: Int ->Bool -> Int @-}
--- test :: Int -> Int
--- test 1 = 1
--- test _ = 0
+filterSharedItemShareTo_EQ val = RefinedFilter ( TestRefinedFilterUserId{refinedFilterFieldUserId = RefSharedItemShareTo, refinedFilterValueUserId=val,
+                    refinedFilterFilter= EQUAL})
