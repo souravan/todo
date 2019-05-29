@@ -30,7 +30,9 @@ getHomeR = do
     let submission = Nothing :: Maybe FileForm
         handlerName = "getHomeR" :: Text
     currentUserId <- requireAuthId
-    allTodoItemsTagged <- runDB $ getAllTodoItems' currentUserId
+    -- allTodoItemsTagged <- runDB $ getAllTodoItems' currentUserId
+    allTodoItemsTagged <- runDB $  selectListTodoItem ((filterTodoItemUserId_EQ currentUserId)?:Empty)
+
     let allTodoItems = content allTodoItemsTagged
     -- allTodoItems <- runDB $ selectList [TodoItemUserId ==. currentUserId] [Asc TodoItemId]
     sharedTodoItemsUsersTagged <- runDB $ getAllsharedFrom' currentUserId
@@ -44,14 +46,15 @@ getHomeR = do
     -- sharedTodoItems = do
     let sharedFromList = content projectTest
     -- let sharedFromList = refEntityListtoList sharedTodoItemsUsers
-    sharedTodoItemsTagged <- runDB $ getAllSharedItems' sharedFromList
+    sharedTodoItemsTagged <- runDB $ getAllSharedItems' currentUserId sharedFromList
     let sharedTodoItems = content sharedTodoItemsTagged
     defaultLayout $ do
         let (commentFormId, commentTextareaId, commentListId) = commentIds
         let   (shareFormId, shareFormAreaId) =  shareIds
         aDomId <- newIdent
         setTitle "Welcome To Yesod!"
-        $(widgetFile "homepage")
+        -- $(widgetFile "homepage")
+        Prelude.undefined
 
 commentIds :: (Text, Text, Text)
 commentIds = ("js-commentForm", "js-createCommentTextarea", "js-commentList")
@@ -69,10 +72,14 @@ refEntityListtoList (x:xs) = sharedFronUserId:(refEntityListtoList xs)
 -- getAllSharedItems :: MonadIO m => [UserId] -> ReaderT SqlBackend m [Entity TodoItem]
 -- getAllSharedItems userIds = selectList [TodoItemUserId <-. userIds] [Asc TodoItemId] 
 
-getAllSharedItems' :: MonadIO m => [UserId] -> ReaderT SqlBackend m(Tagged [RefinedTodoItem])
-getAllSharedItems' userIds = selectListTodoItem((filterTodoItemUserId_IN userIds)?:Empty)
+{-@getAllSharedItems' ::forall<r::UserId->Bool>. currentUserId:UserId->[UserId] -> ReaderT SqlBackend _ (Tagged<{\v-> True}> [RefinedTodoItem<{\_->True}>])@-}
+getAllSharedItems' :: MonadIO m => UserId-> [UserId] -> ReaderT SqlBackend m(Tagged [RefinedTodoItem])
+getAllSharedItems' currentUserId userIds = selectListTodoItem (testFilter?:Empty)
+            where
+                {-@testFilter::RefinedFilter<{\_ ->False}, {\row v -> tuserId row == refUserUserId v || sharedItemProp  (tuserId row) (refUserUserId v)}> RefinedTodoItem @-}
+                testFilter = (filterTodoItemUserId_IN userIds)
 
-
+{-@getAllTodoItems' :: currentUserId:UserId -> ReaderT SqlBackend _ (Tagged<{\v-> refUserUserId v== currentUserId}> [RefinedTodoItem])@-}
 getAllTodoItems' :: MonadIO m => UserId -> ReaderT SqlBackend m (Tagged [RefinedTodoItem])
 getAllTodoItems' currentUserId = selectListTodoItem ((filterTodoItemUserId_EQ currentUserId)?:Empty)
 

@@ -28,7 +28,7 @@ import           GHC.Types
 
 {-@data RefinedUser =RefinedUser {userName::Text ,refUserUserId:: UserId}@-}
 data RefinedUser =RefinedUser {userName::Text ,refUserUserId:: UserId}
-{-@data RefinedTodoItem =RefinedTodoItem {task::Text, refTodoItemTodoItemId::TodoItemId, done::Bool,tuserId::UserId}@-}
+{-@data RefinedTodoItem =RefinedTodoItem {task::Text, refTodoItemTodoItemId::TodoItemId, done::GHC.Types.Bool,tuserId::UserId}@-}
 data RefinedTodoItem =RefinedTodoItem {task::Text, refTodoItemTodoItemId::TodoItemId, done::Bool,tuserId::UserId}
 {-@data RefinedSharedItem =RefinedSharedItem {shareFrom::UserId, shareTo::UserId, refSharedItemSharedItemId :: SharedItemId}@-}
 data RefinedSharedItem =RefinedSharedItem {shareFrom::UserId, shareTo::UserId, refSharedItemSharedItemId :: SharedItemId}
